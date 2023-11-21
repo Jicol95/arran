@@ -59,7 +59,7 @@ func addMiddleware(e *echo.Echo) {
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
-	e.Use(echoprometheus.NewMiddleware("arran")) // adds middleware to gather metrics
+	e.Use(echoprometheus.NewMiddleware("arran"))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{"*"},
