@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/jicol-95/arran/dao"
+	"github.com/jicol-95/arran/dal"
 	"github.com/jicol-95/arran/domain"
 	"github.com/labstack/echo/v4"
 )
@@ -26,7 +26,7 @@ type CreateExampleResourceRequest struct {
 	Name string `json:"name"`
 }
 
-func ExampleResourcePostHandler(tm dao.TransactionManager, svc domain.ExampleResourceService) echo.HandlerFunc {
+func ExampleResourcePostHandler(tm dal.TransactionManager, svc domain.ExampleResourceService) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		logger := c.Logger()
 		logger.Info("Inserting example resource")
@@ -56,7 +56,7 @@ func ExampleResourcePostHandler(tm dao.TransactionManager, svc domain.ExampleRes
 	}
 }
 
-func ExampleResourceGetByIdHandler(tm dao.TransactionManager, svc domain.ExampleResourceService) echo.HandlerFunc {
+func ExampleResourceGetByIdHandler(tm dal.TransactionManager, svc domain.ExampleResourceService) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		logger := c.Logger()
 		id := c.Param("id")
@@ -82,7 +82,7 @@ func ExampleResourceGetByIdHandler(tm dao.TransactionManager, svc domain.Example
 	}
 }
 
-func ExampleResourceGetAllHandler(tm dao.TransactionManager, svc domain.ExampleResourceService) echo.HandlerFunc {
+func ExampleResourceGetAllHandler(tm dal.TransactionManager, svc domain.ExampleResourceService) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		resources, err := svc.GetAllExampleResources()
 
@@ -110,7 +110,7 @@ func ExampleResourceGetAllHandler(tm dao.TransactionManager, svc domain.ExampleR
 	}
 }
 
-func ExampleResourceDeleteByIdHandler(tm dao.TransactionManager, svc domain.ExampleResourceService) echo.HandlerFunc {
+func ExampleResourceDeleteByIdHandler(tm dal.TransactionManager, svc domain.ExampleResourceService) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		logger := c.Logger()
 		id := c.Param("id")

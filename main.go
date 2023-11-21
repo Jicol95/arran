@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/jicol-95/arran/dao"
+	"github.com/jicol-95/arran/dal"
 	"github.com/jicol-95/arran/domain"
 	"github.com/jicol-95/arran/handler"
 	"github.com/labstack/echo-contrib/echoprometheus"
@@ -17,12 +17,12 @@ import (
 )
 
 func main() {
-	if err := dao.RunDatabaseMigrations(); err != nil {
+	if err := dal.RunDatabaseMigrations(); err != nil {
 		log.Fatal(err)
 		os.Exit(1)
 	}
 
-	db, err := dao.InitDB()
+	db, err := dal.InitDB()
 
 	if err != nil {
 		log.Fatal(err)
@@ -33,8 +33,8 @@ func main() {
 	addMiddleware(e)
 	logger := e.Logger
 
-	tm := dao.NewTransactionManager(db)
-	exampleResourceRepo := dao.NewExampleResourceRepository(db)
+	tm := dal.NewTransactionManager(db)
+	exampleResourceRepo := dal.NewExampleResourceRepository(db)
 	exampleResourceService := domain.NewExampleResourceService(logger, tm, exampleResourceRepo)
 
 	e.GET("/metrics", echoprometheus.NewHandler())
