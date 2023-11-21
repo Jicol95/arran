@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jicol-95/arran/dao"
+	"github.com/jicol-95/arran/domain"
 	"github.com/jicol-95/arran/handler"
 	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
@@ -21,12 +22,28 @@ func main() {
 		os.Exit(1)
 	}
 
+	db, err := dao.InitDB()
+
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+
 	e := echo.New()
 	addMiddleware(e)
+	logger := e.Logger
+
+	tm := dao.NewTransactionManager(db)
+	exampleResourceRepo := dao.NewExampleResourceRepository(db)
+	exampleResourceService := domain.NewExampleResourceService(logger, tm, exampleResourceRepo)
 
 	e.GET("/metrics", echoprometheus.NewHandler())
-	e.GET("rest/health", handler.HealthHandler)
-	e.GET("rest/v1/error", handler.ErrorExampleHandler)
+	e.GET("/rest/health", handler.HealthHandler)
+
+	e.POST("/rest/v1/example-resources", handler.ExampleResourcePostHandler(tm, exampleResourceService))
+	e.GET("/rest/v1/example-resources", handler.ExampleResourceGetAllHandler(tm, exampleResourceService))
+	e.GET("/rest/v1/example-resources/:id", handler.ExampleResourceGetByIdHandler(tm, exampleResourceService))
+	e.DELETE("/rest/v1/example-resources/:id", handler.ExampleResourceDeleteByIdHandler(tm, exampleResourceService))
 
 	go func() {
 		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
