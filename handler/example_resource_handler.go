@@ -26,6 +26,10 @@ type CreateExampleResourceRequest struct {
 	Name string `json:"name"`
 }
 
+type UpdateExampleResourceRequest struct {
+	Name string `json:"name"`
+}
+
 func ExampleResourcePostHandler(tm dal.TransactionManager, svc domain.ExampleResourceService) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		logger := c.Logger()
@@ -39,6 +43,36 @@ func ExampleResourcePostHandler(tm dal.TransactionManager, svc domain.ExampleRes
 		}
 
 		resource, err := svc.CreateExampleResource(req.Name)
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+
+		return c.JSON(
+			http.StatusCreated,
+			ExampleResourceDataResponse{
+				Data: ExampleResourceResponse{
+					ID:   resource.ID,
+					Name: resource.Name,
+				},
+			},
+		)
+	}
+}
+
+func ExampleResourceUpdateByIdHandler(tm dal.TransactionManager, svc domain.ExampleResourceService) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		logger := c.Logger()
+		id := c.Param("id")
+
+		req := new(UpdateExampleResourceRequest)
+
+		if err := c.Bind(req); err != nil {
+			logger.Error(err)
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+
+		resource, err := svc.UpdateExampleResource(id, req.Name)
 
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError)
@@ -77,34 +111,6 @@ func ExampleResourceGetByIdHandler(tm dal.TransactionManager, svc domain.Example
 					ID:   resource.ID,
 					Name: resource.Name,
 				},
-			},
-		)
-	}
-}
-
-func ExampleResourceGetAllHandler(tm dal.TransactionManager, svc domain.ExampleResourceService) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		resources, err := svc.GetAllExampleResources()
-
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-
-		var responseData []ExampleResourceResponse
-
-		for _, item := range resources {
-			mappedItem := ExampleResourceResponse{
-				ID:   item.ID,
-				Name: item.Name,
-			}
-
-			responseData = append(responseData, mappedItem)
-		}
-
-		return c.JSON(
-			http.StatusOK,
-			ExampleResourceListDataResponse{
-				Data: responseData,
 			},
 		)
 	}

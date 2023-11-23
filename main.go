@@ -41,7 +41,7 @@ func main() {
 	e.GET("/rest/health", handler.HealthHandler)
 
 	e.POST("/rest/v1/example-resources", handler.ExampleResourcePostHandler(tm, exampleResourceService))
-	e.GET("/rest/v1/example-resources", handler.ExampleResourceGetAllHandler(tm, exampleResourceService))
+	e.PUT("/rest/v1/example-resources/:id", handler.ExampleResourceUpdateByIdHandler(tm, exampleResourceService))
 	e.GET("/rest/v1/example-resources/:id", handler.ExampleResourceGetByIdHandler(tm, exampleResourceService))
 	e.DELETE("/rest/v1/example-resources/:id", handler.ExampleResourceDeleteByIdHandler(tm, exampleResourceService))
 

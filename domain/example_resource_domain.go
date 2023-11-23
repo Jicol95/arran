@@ -35,6 +35,32 @@ func (svc *ExampleResourceService) CreateExampleResource(name string) (dal.Examp
 	return resource, nil
 }
 
+func (svc *ExampleResourceService) UpdateExampleResource(id string, name string) (dal.ExampleResource, error) {
+	tx, _ := svc.tm.BeginTx()
+
+	resource, err := svc.repo.FetchByID(id, true, tx)
+
+	if err != nil {
+		svc.logger.Error("Failed to fetch example resource for update")
+		tx.Rollback()
+		return dal.ExampleResource{}, err
+	}
+
+	resource.Name = name
+
+	if err := svc.repo.Update(resource, tx); err != nil {
+		svc.logger.Error("Failed to insert example resource")
+		tx.Rollback()
+		return dal.ExampleResource{}, err
+	}
+
+	tx.Commit()
+
+	svc.logger.Info("Successfully inserted example resource")
+
+	return resource, nil
+}
+
 func (svc *ExampleResourceService) GetExampleResourceById(id string) (dal.ExampleResource, error) {
 	resource, err := svc.repo.FetchByID(id, false, nil)
 
@@ -44,17 +70,6 @@ func (svc *ExampleResourceService) GetExampleResourceById(id string) (dal.Exampl
 	}
 
 	return resource, nil
-}
-
-func (svc *ExampleResourceService) GetAllExampleResources() ([]dal.ExampleResource, error) {
-	resources, err := svc.repo.FetchAll(nil)
-
-	if err != nil {
-		svc.logger.Error(err)
-		return nil, err
-	}
-
-	return resources, nil
 }
 
 func (svc *ExampleResourceService) DeleteExmpleResourceById(id string) error {

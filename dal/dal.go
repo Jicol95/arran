@@ -31,7 +31,7 @@ func InitDB() (*sql.DB, error) {
 
 func RunDatabaseMigrations() error {
 	m, err := migrate.New(
-		"file://dao/migration",
+		"file://dal/migration",
 		connectionString,
 	)
 

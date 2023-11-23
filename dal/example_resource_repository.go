@@ -17,21 +17,39 @@ type exampleResourcePostgreSQLRepository struct {
 }
 
 type ExampleResourceRepository interface {
-	Insert(event ExampleResource, tx *sql.Tx) error
+	Insert(resource ExampleResource, tx *sql.Tx) error
 	FetchByID(exampleResourceID string, forUpdate bool, tx *sql.Tx) (ExampleResource, error)
+	Update(resource ExampleResource, tx *sql.Tx) error
 	DeleteByID(exampleResourceID string, tx *sql.Tx) error
-	FetchAll(tx *sql.Tx) ([]ExampleResource, error)
 }
 
-func (r *exampleResourcePostgreSQLRepository) Insert(event ExampleResource, tx *sql.Tx) error {
+func (r *exampleResourcePostgreSQLRepository) Insert(resource ExampleResource, tx *sql.Tx) error {
 	query := "INSERT INTO example_resource (id, name, created_at) VALUES ($1, $2, $3);"
 
 	var err error
 
 	if tx != nil {
-		_, err = tx.Exec(query, event.ID, event.Name, event.CreatedAt.UTC())
+		_, err = tx.Exec(query, resource.ID, resource.Name, resource.CreatedAt.UTC())
 	} else {
-		_, err = r.db.Exec(query, event.ID, event.Name, event.CreatedAt.UTC())
+		_, err = r.db.Exec(query, resource.ID, resource.Name, resource.CreatedAt.UTC())
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *exampleResourcePostgreSQLRepository) Update(event ExampleResource, tx *sql.Tx) error {
+	query := "UPDATE example_resource SET name = $1 WHERE id = $2;"
+
+	var err error
+
+	if tx != nil {
+		_, err = tx.Exec(query, event.Name, event.ID)
+	} else {
+		_, err = r.db.Exec(query, event.Name, event.ID)
 	}
 
 	if err != nil {
@@ -85,41 +103,6 @@ func (r *exampleResourcePostgreSQLRepository) FetchByID(exampleResourceID string
 	}
 
 	return ExampleResource{id, name, created_at}, nil
-}
-
-func (r *exampleResourcePostgreSQLRepository) FetchAll(tx *sql.Tx) ([]ExampleResource, error) {
-	query := "SELECT id, name, created_at FROM example_resource;"
-
-	var rows *sql.Rows
-	var err error
-
-	if tx != nil {
-		rows, err = tx.Query(query)
-	} else {
-		rows, err = r.db.Query(query)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	var resultList []ExampleResource
-
-	for rows.Next() {
-		var id string
-		var name string
-		var createdAt time.Time
-
-		// Scan the values from the current row into variables
-		err := rows.Scan(&id, &name, &createdAt)
-		if err != nil {
-			return nil, err
-		}
-
-		resultList = append(resultList, ExampleResource{ID: id, Name: name, CreatedAt: createdAt})
-	}
-
-	return resultList, nil
 }
 
 func NewExampleResourceRepository(db *sql.DB) ExampleResourceRepository {
