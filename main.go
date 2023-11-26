@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/jicol-95/arran/config"
+	"github.com/jicol-95/arran/consumer"
 	"github.com/jicol-95/arran/dal"
 	"github.com/jicol-95/arran/domain"
 	"github.com/jicol-95/arran/handler"
@@ -17,25 +19,29 @@ import (
 )
 
 func main() {
-	if err := dal.RunDatabaseMigrations(); err != nil {
-		log.Fatal(err)
-		os.Exit(1)
-	}
-
-	db, err := dal.InitDB()
-
-	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
-	}
-
 	e := echo.New()
 	addMiddleware(e)
 	logger := e.Logger
 
+	cfg := config.NewArranConfig()
+
+	db, err := dal.InitDB(cfg.PostgresConfig)
+
+	if err != nil {
+		logger.Fatal(err)
+		os.Exit(1)
+	}
+
 	tm := dal.NewTransactionManager(db)
 	exampleResourceRepo := dal.NewExampleResourceRepository(db)
 	exampleResourceService := domain.NewExampleResourceService(logger, tm, exampleResourceRepo)
+
+	_, err = consumer.ProcessExampleResourceTopic(cfg.Kafka, exampleResourceService, logger)
+
+	if err != nil {
+		logger.Fatal(err)
+		os.Exit(1)
+	}
 
 	e.GET("/metrics", echoprometheus.NewHandler())
 	e.GET("/rest/health", handler.HealthHandler)
@@ -68,9 +74,9 @@ func addMiddleware(e *echo.Echo) {
 }
 
 func waitForInterruptSignal(e *echo.Echo) {
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-	<-quit
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt)
+	<-sigChan
 	e.Logger.Info("Interrupt signal received, gracefully shutting down")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
