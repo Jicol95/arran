@@ -1,8 +1,6 @@
 package consumer
 
 import (
-	"log"
-
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/jicol-95/arran/config"
 	"github.com/labstack/echo/v4"
@@ -15,7 +13,7 @@ type KafkaConsumer struct {
 
 func (c *KafkaConsumer) start(topic string) error {
 	if err := c.kafka.Subscribe(topic, nil); err != nil {
-		log.Fatal(err)
+		c.logger.Fatal(err)
 		return err
 	}
 

@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -9,23 +10,27 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type ExapmleResourceConsumer struct {
+type ExampleResourceMessage struct {
+	Name string `json:"name"`
+}
+
+type ExampleResourceConsumer struct {
 	Consumer KafkaConsumer
 	svc      domain.ExampleResourceService
 }
 
-func ProcessExampleResourceTopic(cfg config.KafkaConfig, svc domain.ExampleResourceService, logger echo.Logger) (ExapmleResourceConsumer, error) {
+func ProcessExampleResourceTopic(cfg config.KafkaConfig, svc domain.ExampleResourceService, logger echo.Logger) (ExampleResourceConsumer, error) {
 	k, err := newConsumer(cfg, logger)
 
 	if err != nil {
-		return ExapmleResourceConsumer{}, err
+		return ExampleResourceConsumer{}, err
 	}
 
 	if err := k.start(cfg.ExampleConsumerTopic); err != nil {
-		return ExapmleResourceConsumer{}, err
+		return ExampleResourceConsumer{}, err
 	}
 
-	c := ExapmleResourceConsumer{
+	c := ExampleResourceConsumer{
 		Consumer: k,
 		svc:      svc,
 	}
@@ -35,15 +40,30 @@ func ProcessExampleResourceTopic(cfg config.KafkaConfig, svc domain.ExampleResou
 	return c, nil
 }
 
-func (c *ExapmleResourceConsumer) processMessages() {
+func (c *ExampleResourceConsumer) processMessages() {
 	for {
-		msg, err := c.Consumer.kafka.ReadMessage(time.Second * 5)
+		msg, err := c.readMessage()
 		if err != nil {
 			c.Consumer.logger.Error(err)
 			continue
 		}
 
-		c.Consumer.logger.Info(fmt.Sprintf("Message received: %s", string(msg.Value)))
-		c.svc.CreateExampleResource(string(msg.Value))
+		c.Consumer.logger.Info(fmt.Sprintf("Message received: %s", msg))
+		c.svc.CreateExampleResource(msg.Name)
 	}
+}
+
+func (c *ExampleResourceConsumer) readMessage() (*ExampleResourceMessage, error) {
+	msg, err := c.Consumer.kafka.ReadMessage(time.Second * 5)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var message ExampleResourceMessage
+	if err := json.Unmarshal(msg.Value, &message); err != nil {
+		return nil, err
+	}
+
+	return &message, nil
 }
