@@ -1,30 +1,11 @@
-# syntax=docker/dockerfile:1
-
-# Build the application from source
-FROM golang:1.19 AS build-stage
-
+FROM golang:1.20.0
+RUN mkdir /app
+ADD . /app
 WORKDIR /app
-
-COPY go.mod go.sum ./
+## Add this go mod download command to pull in any dependencies
 RUN go mod download
-
-COPY *.go ./
-
-RUN CGO_ENABLED=0 GOOS=linux go build -o /arran
-
-# Run the tests in the container
-FROM build-stage AS run-test-stage
-RUN go test -v ./...
-
-# Deploy the application binary into a lean image
-FROM gcr.io/distroless/base-debian11 AS build-release-stage
-
-WORKDIR /
-
-COPY --from=build-stage /arran /arran
-
-EXPOSE 8080
-
-USER nonroot:nonroot
-
-ENTRYPOINT ["/arran"]
+## Our project will now successfully build with the necessary go libraries included.
+RUN go build -o main .
+## Our start command which kicks off
+## our newly created binary executable
+CMD ["/app/main"]

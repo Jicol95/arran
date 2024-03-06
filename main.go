@@ -32,6 +32,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	err = dal.RunDatabaseMigrations(cfg.PostgresConfig)
+
+	if err != nil {
+		logger.Fatal(err)
+		os.Exit(1)
+	}
+
 	tm := dal.NewTransactionManager(db)
 	exampleResourceRepo := dal.NewExampleResourceRepository(db)
 	exampleResourceService := domain.NewExampleResourceService(logger, tm, exampleResourceRepo)

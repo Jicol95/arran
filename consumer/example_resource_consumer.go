@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/jicol-95/arran/config"
 	"github.com/jicol-95/arran/domain"
 	"github.com/labstack/echo/v4"
@@ -44,7 +45,10 @@ func (c *ExampleResourceConsumer) processMessages() {
 	for {
 		msg, err := c.readMessage()
 		if err != nil {
-			c.Consumer.logger.Error(err)
+			if !err.(kafka.Error).IsTimeout() {
+				c.Consumer.logger.Error(fmt.Sprintf("Error reading message: %s", err))
+			}
+
 			continue
 		}
 

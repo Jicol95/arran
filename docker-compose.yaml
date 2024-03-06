@@ -1,6 +1,22 @@
 ---
 version: '2'
+
+volumes:
+  postgres-data:
+
 services:
+  postgres:
+    image: postgres:14.1
+    hostname: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=arran
+      - POSTGRES_PASSWORD=arran
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     hostname: zookeeper
