@@ -40,6 +40,7 @@ func NewArranConfig() ArranConfig {
 				"group.id":              os.Getenv("KAFKA_GROUP_ID"),
 				"session.timeout.ms":    os.Getenv("KAFKA_SESSION_TIMEOUT_MS"),
 				"auto.offset.reset":     os.Getenv("KAFKA_AUTO_OFFSET_RESET"),
+				"enable.auto.commit":    false,
 			},
 			ExampleConsumerTopic: os.Getenv("KAFKA_EXAMPLE_CONSUMER_TOPICS"),
 		},

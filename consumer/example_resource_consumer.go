@@ -11,7 +11,12 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type ExampleResourceMessage struct {
+type ExampleResourceKafkaMessage struct {
+	Message KafkaMessage
+	Data    ExampleResourceMessageData
+}
+
+type ExampleResourceMessageData struct {
 	Name string `json:"name"`
 }
 
@@ -45,29 +50,47 @@ func (c *ExampleResourceConsumer) processMessages() {
 	for {
 		msg, err := c.readMessage()
 		if err != nil {
-			if !err.(kafka.Error).IsTimeout() {
-				c.Consumer.logger.Error(fmt.Sprintf("Error reading message: %s", err))
+			if kafkaErr, ok := err.(kafka.Error); ok {
+				if kafkaErr.IsTimeout() {
+					continue
+				}
 			}
 
+			// TODO: this will cause poison pill scenario, need to implement dead letter queue.
+			c.Consumer.logger.Error(fmt.Sprintf("Error reading message: %s", err))
 			continue
 		}
 
-		c.Consumer.logger.Info(fmt.Sprintf("Message received: %s", msg))
-		c.svc.CreateExampleResource(msg.Name)
+		c.Consumer.logger.Info(fmt.Sprintf("Message received: %s", msg.Data))
+		_, err = c.svc.CreateExampleResource(msg.Data.Name)
+
+		if err != nil {
+			// TODO: this will cause poison pill scenario, need to implement dead letter queue.
+			c.Consumer.logger.Error("Error processing message")
+		} else {
+			c.Consumer.logger.Info("Message processed successfully")
+			c.Consumer.kafka.Commit()
+		}
 	}
 }
 
-func (c *ExampleResourceConsumer) readMessage() (*ExampleResourceMessage, error) {
+func (c *ExampleResourceConsumer) readMessage() (*ExampleResourceKafkaMessage, error) {
 	msg, err := c.Consumer.kafka.ReadMessage(time.Second * 5)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var message ExampleResourceMessage
-	if err := json.Unmarshal(msg.Value, &message); err != nil {
+	var data ExampleResourceMessageData
+	if err := json.Unmarshal(msg.Value, &data); err != nil {
 		return nil, err
 	}
 
-	return &message, nil
+	return &ExampleResourceKafkaMessage{
+		Message: KafkaMessage{
+			Topic:  msg.TopicPartition.Topic,
+			Offset: int64(msg.TopicPartition.Offset),
+		},
+		Data: data,
+	}, nil
 }

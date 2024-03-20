@@ -11,6 +11,11 @@ type KafkaConsumer struct {
 	logger echo.Logger
 }
 
+type KafkaMessage struct {
+	Topic  *string
+	Offset int64
+}
+
 func (c *KafkaConsumer) start(topic string) error {
 	if err := c.kafka.Subscribe(topic, nil); err != nil {
 		c.logger.Fatal(err)

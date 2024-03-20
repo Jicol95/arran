@@ -27,7 +27,7 @@ func (svc *ExampleResourceService) CreateExampleResource(name string) (dal.Examp
 
 	if err := tx.Commit(); err != nil {
 		svc.logger.Error("Failed to insert example resource")
-		return dal.ExampleResource{}, nil
+		return dal.ExampleResource{}, err
 	}
 
 	svc.logger.Info("Successfully inserted example resource")
